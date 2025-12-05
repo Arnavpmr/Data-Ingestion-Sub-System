@@ -1,6 +1,8 @@
 import requests
 import os
 import time
+import re
+
 from datetime import datetime
 from bs4 import BeautifulSoup
 
@@ -32,13 +34,13 @@ def fetch_page(page):
     r.raise_for_status()
     return r.text
 
-def save_page(page, html):
-    path = os.path.join(RUN_DIR, f"missing_{page}.html")
+def save_profile(name, html):
+    path = os.path.join(RUN_DIR, f"{name}.html")
 
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print("Saved:", path)
+    print("Saved Profile:", name)
 
 def has_results(html):
     """Check if page has any results"""
@@ -49,7 +51,12 @@ def has_results(html):
 
     return False
 
-def scrape_all(start_page=START_PAGE, delay=DELAY):
+def name_to_url(name):
+    # lowercase all characters, remove parentheses, and replace spaces with hyphens
+    name = re.sub(r'[()]', '', name)
+    return name.lower().strip().replace(' ', '-')
+
+def scrape_all_profiles(start_page=START_PAGE, delay=DELAY):
     page = start_page
 
     while True:
@@ -59,12 +66,29 @@ def scrape_all(start_page=START_PAGE, delay=DELAY):
         if not has_results(html):
             print("Empty response — stopping job.")
             break
+            
+        ## get all names from html
+        soup = BeautifulSoup(html, 'lxml')
+        previews = soup.find_all('div', class_='ts-preview')
+        for preview in previews:
+            heading = preview.find('h3', class_='elementor-heading-title')
 
-        save_page(page, html)
+            if heading and heading.find('a'):
+                full_name = heading.find('a').text.strip()
+
+                try:
+                    r = requests.get(BASE_URL + "people/" + name_to_url(full_name))
+                    r.raise_for_status()
+                    save_profile(name_to_url(full_name), r.text)
+                except Exception as e:
+                    print(f"Failed to fetch profile for {full_name}: {e}")
+
+                time.sleep(delay)
+
         page += 1
         time.sleep(delay)
     
     print(f"Fetched {page} pages!")
 
 if __name__ == "__main__":
-    scrape_all()
+    scrape_all_profiles()
