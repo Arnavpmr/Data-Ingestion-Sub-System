@@ -1,7 +1,7 @@
 import tabula
-import pandas as pd
 from pathlib import Path
 from datetime import datetime
+import pandas as pd
 
 if __name__ == "__main__":
     cur_date = datetime.now().strftime("%Y-%m-%d")
@@ -29,6 +29,9 @@ if __name__ == "__main__":
 
     df = df.rename(columns={'Last Known Point': 'last_seen', 'Date': 'date_missing'})
     df = df[[col for col in desired_order if col in df.columns]]
+
+    # append Yosemite to every last_seen entry
+    df['last_seen'] = df['last_seen'].apply(lambda x: f"{x}, Yosemite" if pd.notnull(x) else x)
 
     # Save as CSV
     csv_path.parent.mkdir(parents=True, exist_ok=True)

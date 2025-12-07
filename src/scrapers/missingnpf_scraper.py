@@ -9,13 +9,8 @@ from bs4 import BeautifulSoup
 BASE_URL = "https://missingnpf.com/"
 OUTPUT_BASE_DIR = "data/raw/missingnpf"
 DELAY = 1.0
-LIMIT = 10
+PEOPLE_PER_PAGE = 10
 START_PAGE = 1
-
-# Create a folder for this run using current date
-today = datetime.now().strftime("%Y-%m-%d")
-RUN_DIR = os.path.join(OUTPUT_BASE_DIR, today)
-os.makedirs(RUN_DIR, exist_ok=True)
 
 def url_params(page):
     return {
@@ -24,7 +19,7 @@ def url_params(page):
         "type": "people",
         "sort": "alphabetical",
         "pg": page,
-        "limit": LIMIT,
+        "limit": PEOPLE_PER_PAGE,
         "__template_id": 9088,
         "__get_total_count": 1
     }
@@ -44,7 +39,7 @@ def save_profile(name, html):
 
 def has_results(html):
     """Check if page has any results"""
-    soup = BeautifulSoup(html, "html.parser")
+    soup = BeautifulSoup(html, "lxml")
     info_tag = soup.find("script", class_="info")
 
     if info_tag: return info_tag.get("data-has-results", "false").lower() == "true"
@@ -66,24 +61,29 @@ def scrape_all_profiles(start_page=START_PAGE, delay=DELAY):
         if not has_results(html):
             print("Empty response — stopping job.")
             break
+
+        # save page html for reference
+        with open(os.path.join(PAGES_DIR, f"page_{page}.html"), 
+                  "w", encoding="utf-8") as f:
+            f.write(html)
             
         ## get all names from html
-        soup = BeautifulSoup(html, 'lxml')
-        previews = soup.find_all('div', class_='ts-preview')
-        for preview in previews:
-            heading = preview.find('h3', class_='elementor-heading-title')
+        # soup = BeautifulSoup(html, 'lxml')
+        # previews = soup.find_all('div', class_='ts-preview')
+        # for preview in previews:
+        #     heading = preview.find('h3', class_='elementor-heading-title')
 
-            if heading and heading.find('a'):
-                full_name = heading.find('a').text.strip()
+        #     if heading and heading.find('a'):
+        #         full_name = heading.find('a').text.strip()
 
-                try:
-                    r = requests.get(BASE_URL + "people/" + name_to_url(full_name))
-                    r.raise_for_status()
-                    save_profile(name_to_url(full_name), r.text)
-                except Exception as e:
-                    print(f"Failed to fetch profile for {full_name}: {e}")
+        #         try:
+        #             r = requests.get(BASE_URL + "people/" + name_to_url(full_name))
+        #             r.raise_for_status()
+        #             save_profile(name_to_url(full_name), r.text)
+        #         except Exception as e:
+        #             print(f"Failed to fetch profile for {full_name}: {e}")
 
-                time.sleep(delay)
+        #         time.sleep(delay)
 
         page += 1
         time.sleep(delay)
@@ -91,4 +91,13 @@ def scrape_all_profiles(start_page=START_PAGE, delay=DELAY):
     print(f"Fetched {page} pages!")
 
 if __name__ == "__main__":
+    # Create a folder for this run using current date
+    today = datetime.now().strftime("%Y-%m-%d")
+
+    RUN_DIR = os.path.join(OUTPUT_BASE_DIR, today)
+    PAGES_DIR = os.path.join(RUN_DIR, "pages")
+
+    os.makedirs(RUN_DIR, exist_ok=True)
+    os.makedirs(PAGES_DIR, exist_ok=True)
+
     scrape_all_profiles()
