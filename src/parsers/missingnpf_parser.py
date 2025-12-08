@@ -76,7 +76,7 @@ class MissingNPFParser(Parser):
                                     # Extract age
                                     if 'Age:' in text:
                                         age_match = re.search(r'Age:\s*(\d+)', text)
-                                        if age_match:
+                                        if age_match and int(age_match.group(1)) > 0:
                                             record['age'] = age_match.group(1)
                                     
                                     # Extract gender

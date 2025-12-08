@@ -13,8 +13,9 @@ class LocationsUnknownParser(Parser):
 
         pattern = r'(\d{2}-\d{2}-\d{4})\ [–-]\ ([^–]+?)\ [–-]\ ([^<]+)'
         matches = re.findall(pattern, data_string)
+        normalized_matches = [(date.replace("-", "/"), name, loc) for date, name, loc in matches]
 
-        self.df = pd.DataFrame(matches, columns=['date_missing', 'name', 'last_seen'])
+        self.df = pd.DataFrame(normalized_matches, columns=['date_missing', 'name', 'last_seen'])
 
 if __name__ == "__main__":
     parser = LocationsUnknownParser()

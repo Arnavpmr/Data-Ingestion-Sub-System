@@ -2,7 +2,6 @@ import os
 import psycopg
 from psycopg import OperationalError
 from dotenv import load_dotenv
-import pandas as pd
 
 # Load environment variables from .env file
 load_dotenv()

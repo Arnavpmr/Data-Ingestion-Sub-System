@@ -31,7 +31,10 @@ if __name__ == "__main__":
     df = df[[col for col in desired_order if col in df.columns]]
 
     # append Yosemite to every last_seen entry
-    df['last_seen'] = df['last_seen'].apply(lambda x: f"{x}, Yosemite" if pd.notnull(x) else x)
+    df['last_seen'] = df['last_seen'].apply(lambda x: f"{x}, Yosemite National Park" if pd.notnull(x) else x)
+
+    # Format date_missing to MM/DD/YYYY
+    df['date_missing'] = pd.to_datetime(df['date_missing'], errors='coerce').dt.strftime('%m/%d/%Y')
 
     # Save as CSV
     csv_path.parent.mkdir(parents=True, exist_ok=True)
