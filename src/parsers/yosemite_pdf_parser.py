@@ -3,7 +3,7 @@ from pathlib import Path
 from datetime import datetime
 import pandas as pd
 
-if __name__ == "__main__":
+def parse_yosemite_pdf():
     cur_date = datetime.now().strftime("%Y-%m-%d")
     pdf_path = Path("data/raw/yosemite_pdf/missing_persons_yosemite.pdf")
     csv_path = Path(f"data/silver/yosemite_pdf/{cur_date}/missing_persons_yosemite.csv")

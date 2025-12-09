@@ -1,14 +1,11 @@
 import os
 import pandas as pd
-from collections import Counter
 
 from typing import Optional, List
 from pydantic import BaseModel, field_validator, ValidationError
 
 from datetime import datetime
 from utils import get_latest_dir
-
-import dedupe
 
 
 class PersonRecord(BaseModel):
@@ -43,6 +40,15 @@ class PersonRecord(BaseModel):
         except ValueError:
             raise ValueError("date_missing must be in MM/DD/YYYY format")
 
+def clean_insufficient_rows(df):
+    required_cols = ["name", "date_missing", "last_seen"]
+    clean_df = df.dropna(subset=required_cols)
+
+    for col in required_cols:
+        clean_df = clean_df[clean_df[col].str.strip() != ""]
+
+    return clean_df
+
 def validate_table(df: pd.DataFrame) -> pd.DataFrame:
     target_cols = ["name", "age", "gender", "date_missing", "last_seen"]
     available_cols = [c for c in target_cols if c in df.columns]
@@ -73,32 +79,7 @@ def validate_and_combine_tables(list_of_dfs: List[pd.DataFrame]) -> pd.DataFrame
     validated = [validate_table(df) for df in list_of_dfs]
     return pd.concat(validated, ignore_index=True)
 
-def choose_best(values):
-    """Select best value from duplicates column list."""
-    # Remove missing markers
-    clean = [v for v in values if v not in ("__MISSING__", "", None, float("nan"))]
-
-    if not clean:
-        return None
-
-    # If numeric (age)
-    if all(str(v).isdigit() for v in clean):
-        return Counter(clean).most_common(1)[0][0]
-
-    # If strings → pick longest (more info)
-    return max(clean, key=lambda x: len(str(x)))
-
-def merge_cluster(records):
-    """Merge several dict rows into one canonical row."""
-    merged = {}
-    all_keys = set().union(*records)
-
-    for key in all_keys:
-        merged[key] = choose_best([rec.get(key) for rec in records])
-
-    return merged
-
-if __name__ == "__main__":
+def validate_all_data():
     dfs = []
 
     for dir in os.listdir("data/silver"):
@@ -114,43 +95,4 @@ if __name__ == "__main__":
 
     combined_df = validate_and_combine_tables(dfs)
 
-    combined_df = combined_df.fillna("__MISSING__")
-    combined_df['age'] = combined_df['age'].apply(lambda x: str(x))
-    data_dict = combined_df.to_dict(orient="index")
-
-    with open("dedupe/settings_file", "rb") as sf:
-        deduper = dedupe.StaticDedupe(sf)
-    
-    print("clustering...")
-    clustered_dupes = deduper.partition(data_dict, 0.5)
-
-    print("# duplicate sets", len(clustered_dupes))
-
-    merged_rows = []
-    for cluster_id, (record_ids, scores) in enumerate(clustered_dupes):
-        records = [data_dict[int(rid)] for rid in record_ids]
-        merged = merge_cluster(records)
-        merged_rows.append(merged)
-    
-    final_df = pd.DataFrame(merged_rows)
-    final_df.to_csv("data/gold/merged_validated_records.csv", index=False)
-
-    # dedupe_fields = [
-    #     dedupe.variables.String("name"),
-    #     dedupe.variables.String("age", has_missing=True),
-    #     dedupe.variables.Exact("gender", has_missing=True),
-    #     dedupe.variables.String("date_missing", has_missing=True),
-    #     dedupe.variables.String("last_seen", has_missing=True),
-    # ]
-
-    # deduper = dedupe.Dedupe(dedupe_fields)
-    # deduper.prepare_training(data_dict)
-    # dedupe.console_label(deduper)
-    # deduper.train()
-
-    # with open("training.json", "w") as tf:
-    #     deduper.write_training(tf)
-
-    # with open("settings_file", "wb") as sf:
-    #     deduper.write_settings(sf)
-
+    return combined_df

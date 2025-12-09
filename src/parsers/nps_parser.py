@@ -5,7 +5,7 @@ import re
 import pandas as pd
 from bs4 import BeautifulSoup
 
-from ..parser import Parser
+from parsers.parser import Parser
 
 class NPSParser(Parser):
     def __init__(self):

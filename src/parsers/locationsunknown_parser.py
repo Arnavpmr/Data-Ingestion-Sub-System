@@ -1,7 +1,7 @@
 import re
 import pandas as pd
 
-from ..parser import Parser
+from parsers.parser import Parser
 
 class LocationsUnknownParser(Parser):
     def __init__(self):

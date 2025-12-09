@@ -6,6 +6,7 @@ from typing import Optional
 
 import os
 from datetime import datetime
+
 from utils import get_latest_dir
 
 
@@ -30,12 +31,12 @@ class Victim(BaseModel):
         except ValueError:
             return None
 
-def clean_csv():
+def clean_kaggle_data():
     # name,age,park,state,year,notes,latitude,longitude
     EXPECTED_COLS = 8  
 
     clean_rows = []
-    input_dir = get_latest_dir("/data/raw/kaggle")
+    input_dir = get_latest_dir("data/raw/kaggle")
     input_path = os.path.join(input_dir, "victims_coords.csv")
 
     with open(input_path, "r", encoding="utf-8") as f:
@@ -50,7 +51,7 @@ def clean_csv():
             name, age, park, *_ = row  # only the first 3 matter
             try:
                 victim = Victim(name=name, age=age, park=park)
-                clean_rows.append({'name': victim.name, 'age': victim.age, 'last_seen': victim.park})
+                clean_rows.append({'name': victim.name.strip(), 'age': victim.age, 'last_seen': victim.park.strip()})
             except ValidationError as e:
                 print(e, f"on line {line_num}")
                 continue
@@ -62,6 +63,3 @@ def clean_csv():
 
     os.makedirs(output_dir, exist_ok=True)
     df.to_csv(os.path.join(output_dir, "kaggle.csv"), index=False)
-
-if __name__ == "__main__":
-    clean_csv()

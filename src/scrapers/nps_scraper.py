@@ -1,4 +1,4 @@
-from ..single_page_scraper import SinglePageScraper
+from .single_page_scraper import SinglePageScraper
 
 if __name__ == "__main__":
     s = SinglePageScraper(

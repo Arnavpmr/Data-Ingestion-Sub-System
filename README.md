@@ -32,3 +32,5 @@ Web scraping
 Important Notes
 Do not train dedupe with vscode's debugger as it interferes with stuff
 Run validator.py in the terminal
+Only need to focus on unit testing individual functions with pytest
+    No need for integration tests or anything else

@@ -6,7 +6,7 @@ import re
 
 from datetime import datetime
 
-from ..parser import Parser
+from parsers.parser import Parser
 
 class MissingNPFParser(Parser):
     def __init__(self):
