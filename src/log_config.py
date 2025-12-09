@@ -21,6 +21,12 @@ LOGGING_CONFIG = {
             'level': 'INFO',
             'filename': 'logs/app.log',
         },
+        'debug-file-log': {
+            'class': 'logging.handlers.RotatingFileHandler',
+            'formatter': 'default',
+            'level': 'DEBUG',
+            'filename': 'logs/debug.log',
+        },
         'error-file-log': {
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'default',
@@ -30,14 +36,14 @@ LOGGING_CONFIG = {
     },
     'loggers': {
         'missingETL': {
-            'handlers': ['console', 'file', 'error-file-log'],
+            'handlers': ['console', 'file', 'error-file-log', 'debug-file-log'],
             'level': 'DEBUG',
             'propagate': False,
         },
     },
     'root': {
         'level': 'INFO',
-        'handlers': ['console', 'file', 'error-file-log'],
+        'handlers': ['console', 'file', 'error-file-log', 'debug-file-log'],
     }
 }
 

@@ -8,7 +8,11 @@ from datetime import datetime
 
 from parsers.parser import Parser
 
+from log_config import get_logger
+
 class MissingNPFParser(Parser):
+    logger = get_logger(module_name=__name__)
+
     def __init__(self):
         super().__init__("missingnpf")
     
@@ -17,6 +21,7 @@ class MissingNPFParser(Parser):
 
         for file in os.listdir(self.input_dir + '/pages'):
             with open(os.path.join(self.input_dir, 'pages', file), 'r', encoding='utf-8') as f:
+                MissingNPFParser.logger.debug(f"Parsing file: {file}")
                 html_names = f.read()
                 soup = BeautifulSoup(html_names, 'lxml')
                 previews = soup.find_all('div', class_='ts-preview')
@@ -31,7 +36,7 @@ class MissingNPFParser(Parser):
                         full_name = heading.find('a').text.strip()
 
                         if not MissingNPFParser._is_valid_name(full_name):
-                            print(f"Dropping entry due to invalid name: {full_name}")
+                            MissingNPFParser.logger.debug(f"Rejected: Dropping entry due to invalid name: {full_name}")
                             continue
 
                         record['name'] = full_name
@@ -85,6 +90,7 @@ class MissingNPFParser(Parser):
                                         if gender_match:
                                             record['gender'] = 'M' if gender_match.group(1)[0] == 'M' else 'F'
 
+                    MissingNPFParser.logger.debug(f"Parsed record: {record}")
                     records.append(record)
 
         self.df = pd.DataFrame(records)
@@ -110,6 +116,7 @@ class MissingNPFParser(Parser):
     @staticmethod
     def _name_to_url(name):
         # lowercase all characters, remove parentheses, and replace spaces with hyphens
+        MissingNPFParser.logger.debug(f"Converting name to URL format: {name}")
         name = re.sub(r'[()]', '', name)
         return name.lower().strip().replace(' ', '-')
 

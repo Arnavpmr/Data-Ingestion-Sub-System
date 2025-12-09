@@ -7,7 +7,13 @@ from bs4 import BeautifulSoup
 
 from parsers.parser import Parser
 
+from log_config import get_logger
+
+# Add some debug logs in this file!
+
 class NPSParser(Parser):
+    logger = get_logger(module_name=__name__)
+
     def __init__(self):
         super().__init__("nps")
 
@@ -27,6 +33,8 @@ class NPSParser(Parser):
                     record['name'] = name_match.group(1).strip()
                     # Remove extra formatting
                     record['name'] = re.sub(r'\s+', ' ', record['name'])
+
+                    NPSParser.logger.debug(f"Extracted name: {record['name']}")
                 
                 desc_match = re.search(r'Description:\s*([^\n]+(?:\n[^\n]+)*?)(?=Case Info|$)',
                                     text, re.DOTALL)
@@ -54,6 +62,7 @@ class NPSParser(Parser):
                 
                 records.append(record)
             
+        NPSParser.logger.info(f"Parsed {len(records)} records from NPS data.")
         self.df = pd.DataFrame(records)
 
     @staticmethod
@@ -70,6 +79,9 @@ class NPSParser(Parser):
 
         best = difflib.get_close_matches(month, months, n=1, cutoff=0.6)
         if best:
+            if month != best[0]:
+                NPSParser.logger.debug(f"Corrected month from '{month}' to '{best[0]}'")
+
             return best[0] + " " + parts[1]
 
         return date_str

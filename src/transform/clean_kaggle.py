@@ -9,6 +9,9 @@ from datetime import datetime
 
 from utils import get_latest_dir
 
+from log_config import get_logger
+
+logger = get_logger(module_name=__name__)
 
 class Victim(BaseModel):
     name: str
@@ -19,6 +22,7 @@ class Victim(BaseModel):
     @classmethod
     def validate_name(cls, v: str) -> str:
         if len(v.strip()) == 0:
+            logger.error('name must be a non-empty string')
             raise ValueError('name must be a non-empty string')
         return v
     
@@ -34,6 +38,7 @@ class Victim(BaseModel):
 def clean_kaggle_data():
     # name,age,park,state,year,notes,latitude,longitude
     EXPECTED_COLS = 8  
+    dropped = 0
 
     clean_rows = []
     input_dir = get_latest_dir("data/raw/kaggle")
@@ -46,6 +51,8 @@ def clean_kaggle_data():
             if line_num == 0: continue
 
             if len(row) != EXPECTED_COLS:
+                logger.debug(f"Rejected: Row {row} due to unexpected number of columns: {len(row)}")
+                dropped += 1
                 continue
 
             name, age, park, *_ = row  # only the first 3 matter
@@ -53,13 +60,17 @@ def clean_kaggle_data():
                 victim = Victim(name=name, age=age, park=park)
                 clean_rows.append({'name': victim.name.strip(), 'age': victim.age, 'last_seen': victim.park.strip()})
             except ValidationError as e:
-                print(e, f"on line {line_num}")
+                logger.debug(f"Rejected: {e} on line {line_num}")
+                dropped += 1
                 continue
     
     df = pd.DataFrame(clean_rows)
+    logger.info(f"Cleaned kaggle data with {len(df)} valid records. Dropped {dropped} invalid records.")
 
     today = datetime.now().strftime("%Y-%m-%d")
     output_dir = os.path.join(f'data/silver/kaggle/{today}')
 
     os.makedirs(output_dir, exist_ok=True)
     df.to_csv(os.path.join(output_dir, "kaggle.csv"), index=False)
+
+    logger.debug(f"Cleaned kaggle data saved to {output_dir}/kaggle.csv")

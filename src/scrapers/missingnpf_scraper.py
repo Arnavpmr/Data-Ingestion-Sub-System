@@ -6,11 +6,15 @@ import re
 from datetime import datetime
 from bs4 import BeautifulSoup
 
+from log_config import get_logger
+
 BASE_URL = "https://missingnpf.com/"
 OUTPUT_BASE_DIR = "data/raw/missingnpf"
 DELAY = 1.0
 PEOPLE_PER_PAGE = 10
 START_PAGE = 1
+
+logger = get_logger(module_name=__name__)
 
 def url_params(page):
     return {
@@ -25,9 +29,12 @@ def url_params(page):
     }
 
 def fetch_page(page):
-    r = requests.get(BASE_URL, params=url_params(page), timeout=15)
-    r.raise_for_status()
-    return r.text
+    try:
+        r = requests.get(BASE_URL, params=url_params(page), timeout=15)
+        r.raise_for_status()
+        return r.text
+    except Exception as e:
+        logger.error(f"Error fetching page {page}: {e}")
 
 def save_profile(name, html):
     path = os.path.join(RUN_DIR, f"{name}.html")
@@ -35,7 +42,7 @@ def save_profile(name, html):
     with open(path, "w", encoding="utf-8") as f:
         f.write(html)
 
-    print("Saved Profile:", name)
+    logger.debug(f"Saved Profile: {name}")
 
 def has_results(html):
     """Check if page has any results"""
@@ -52,43 +59,45 @@ def name_to_url(name):
     return name.lower().strip().replace(' ', '-')
 
 def scrape_all_profiles(start_page=START_PAGE, delay=DELAY):
-    page = start_page
+    page_count = start_page
+    logger = get_logger(module_name=__name__)
 
     while True:
-        print("Fetching page", page)
-        html = fetch_page(page)
+        logger.debug(f"Fetching page {page_count}")
+        html = fetch_page(page_count)
 
         if not has_results(html):
-            print("Empty response — stopping job.")
+            logger.debug("Empty response — stopping job.")
             break
 
         # save page html for reference
-        with open(os.path.join(PAGES_DIR, f"page_{page}.html"), 
+        with open(os.path.join(PAGES_DIR, f"page_{page_count}.html"), 
                   "w", encoding="utf-8") as f:
             f.write(html)
             
-        ## get all names from html
-        # soup = BeautifulSoup(html, 'lxml')
-        # previews = soup.find_all('div', class_='ts-preview')
-        # for preview in previews:
-        #     heading = preview.find('h3', class_='elementor-heading-title')
+        # get all names from profile page
+        soup = BeautifulSoup(html, 'lxml')
+        previews = soup.find_all('div', class_='ts-preview')
+        for preview in previews:
+            heading = preview.find('h3', class_='elementor-heading-title')
 
-        #     if heading and heading.find('a'):
-        #         full_name = heading.find('a').text.strip()
+            if heading and heading.find('a'):
+                full_name = heading.find('a').text.strip()
+                logger.debug(f"Fetching profile for {full_name}")
 
-        #         try:
-        #             r = requests.get(BASE_URL + "people/" + name_to_url(full_name))
-        #             r.raise_for_status()
-        #             save_profile(name_to_url(full_name), r.text)
-        #         except Exception as e:
-        #             print(f"Failed to fetch profile for {full_name}: {e}")
+                try:
+                    r = requests.get(BASE_URL + "people/" + name_to_url(full_name))
+                    r.raise_for_status()
+                    save_profile(name_to_url(full_name), r.text)
+                except Exception as e:
+                    logger.error(f"Failed to fetch profile for {full_name}: {e}")
 
-        #         time.sleep(delay)
+                time.sleep(delay)
 
-        page += 1
+        page_count += 1
         time.sleep(delay)
     
-    print(f"Fetched {page} pages!")
+    logger.info(f"Scraped {page_count} pages!")
 
 if __name__ == "__main__":
     # Create a folder for this run using current date

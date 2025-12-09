@@ -7,6 +7,10 @@ from pydantic import BaseModel, field_validator, ValidationError
 from datetime import datetime
 from utils import get_latest_dir
 
+from log_config import get_logger
+
+
+logger = get_logger(module_name=__name__)
 
 class PersonRecord(BaseModel):
     name: Optional[str] = None
@@ -38,14 +42,18 @@ class PersonRecord(BaseModel):
             datetime.strptime(v, "%m/%d/%Y")
             return v
         except ValueError:
+            logger.error(f"Failed to parse date_missing: {v}")
             raise ValueError("date_missing must be in MM/DD/YYYY format")
 
 def clean_insufficient_rows(df):
+    logger.debug("Cleaning rows with insufficient data.")
     required_cols = ["name", "date_missing", "last_seen"]
     clean_df = df.dropna(subset=required_cols)
 
     for col in required_cols:
         clean_df = clean_df[clean_df[col].str.strip() != ""]
+    
+    logger.debug(f"Rejected: {len(df) - len(clean_df)} rows dropped due to insufficient data.")
 
     return clean_df
 
@@ -62,7 +70,9 @@ def validate_table(df: pd.DataFrame) -> pd.DataFrame:
             if col in available_cols and (pd.isna(row[col]) or row[col] == "")
         ]
 
-        if missing_required: continue
+        if missing_required:
+            logger.debug(f"Rejected: Due to missing required fields\n{row}")
+            continue
 
         row_dict = row.to_dict()
         partial_row = {k: (v if not pd.isna(v) else None) for k, v in row_dict.items()}
@@ -71,11 +81,14 @@ def validate_table(df: pd.DataFrame) -> pd.DataFrame:
             record = PersonRecord(**partial_row)
             clean_rows.append(record.model_dump())
         except ValidationError as e:
+            logger.debug(f"Rejected: Validation error in row: {row}\n{e}")
             raise ValueError(f"Validation error in row: {row}\n{e}")
 
     return pd.DataFrame(clean_rows, columns=target_cols)
 
 def validate_and_combine_tables(list_of_dfs: List[pd.DataFrame]) -> pd.DataFrame:
+    logger.debug("Validating and combining multiple data tables.")
+
     validated = [validate_table(df) for df in list_of_dfs]
     return pd.concat(validated, ignore_index=True)
 

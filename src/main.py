@@ -25,11 +25,6 @@ def main():
     setup_logging()
     logger = get_logger(module_name=__name__)
 
-    # logger.info("Starting scraping process.")
-    # logger.warning("This is a warning message.")
-    # logger.error("This is an error message.")
-    # logger.debug("This is a debug message.")
-
     # Initialize single-page scrapers
     single_page_scrapers = [
         SinglePageScraper(
@@ -57,6 +52,7 @@ def main():
 
     # logger.info("Fetching kaggle data.")
     # fetch_kaggle_data()
+    # logger.info("Kaggle data fetched successfully.")
 
     # logger.info("Scraping and data fetching process completed! Beginning parsing and validation.")
 
@@ -69,8 +65,8 @@ def main():
     # Run parsers
     for parser in parsers:
         logger.info(f"Parsing data for {parser.name}")
-        # parser.parse()
-        # parser.save_csv()
+        parser.parse()
+        parser.save_csv()
         logger.info(f"Saved CSV for {parser.name}")
     
     logger.info("Parsing Yosemite pdf data")
@@ -100,9 +96,9 @@ def main():
     logger.info("Gender enrichment completed.")
 
     # Load data into postgresql
-    logger.info("Loading data into postgres")
-    load_to_postgres(final_data)
-    logger.info(f"Loaded {len(final_data)} records into postgres!")
+    # logger.info("Loading data into postgres")
+    # load_to_postgres(final_data)
+    # logger.info(f"Loaded {len(final_data)} records into postgres!")
 
 if __name__ == "__main__":
     main()

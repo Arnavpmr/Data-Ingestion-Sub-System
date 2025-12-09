@@ -3,13 +3,16 @@ from collections import Counter
 
 import dedupe
 
+from log_config import get_logger
+
+logger = get_logger(module_name=__name__)
+
 def choose_best(values):
     """Select best value from duplicates column list."""
     # Remove missing markers
     clean = [v for v in values if v not in ("__MISSING__", "", None, float("nan"))]
 
-    if not clean:
-        return None
+    if not clean: return None
 
     # If numeric (age)
     if all(str(v).isdigit() for v in clean):
@@ -24,6 +27,7 @@ def merge_cluster(records):
     all_keys = set().union(*records)
 
     for key in all_keys:
+        logger.debug(f"Merging records with values: {[rec.get(key) for rec in records]}")
         merged[key] = choose_best([rec.get(key) for rec in records])
 
     return merged
@@ -36,10 +40,9 @@ def dedupe_data(df):
     with open("dedupe/settings_file", "rb") as sf:
         deduper = dedupe.StaticDedupe(sf)
     
-    print("clustering...")
     clustered_dupes = deduper.partition(data_dict, 0.5)
 
-    print("# duplicate sets", len(clustered_dupes))
+    logger.info(f"Merging {len(clustered_dupes)} duplicate clusters")
 
     merged_rows = []
     for _, (record_ids, _) in enumerate(clustered_dupes):
@@ -48,22 +51,3 @@ def dedupe_data(df):
         merged_rows.append(merged)
     
     return pd.DataFrame(merged_rows)
-
-    # dedupe_fields = [
-    #     dedupe.variables.String("name"),
-    #     dedupe.variables.String("age", has_missing=True),
-    #     dedupe.variables.Exact("gender", has_missing=True),
-    #     dedupe.variables.String("date_missing", has_missing=True),
-    #     dedupe.variables.String("last_seen", has_missing=True),
-    # ]
-
-    # deduper = dedupe.Dedupe(dedupe_fields)
-    # deduper.prepare_training(data_dict)
-    # dedupe.console_label(deduper)
-    # deduper.train()
-
-    # with open("training.json", "w") as tf:
-    #     deduper.write_training(tf)
-
-    # with open("settings_file", "wb") as sf:
-    #     deduper.write_settings(sf)

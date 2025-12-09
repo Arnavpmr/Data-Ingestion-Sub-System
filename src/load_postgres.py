@@ -6,13 +6,18 @@ from dotenv import load_dotenv
 
 import pandas as pd
 
+from log_config import get_logger
+
 TABLE_NAME = "missing_persons"
 DB_NAME = "missing_persons_db"
 
 load_dotenv()
 
 def load_to_postgres(df):
+    logger = get_logger(module_name=__name__)
     # convert all age values to int in df
+    logger.debug("Coercing age values to integers.")
+
     df['age'] = pd.to_numeric(df['age'], errors='coerce').astype('Int64')
     records = df.to_dict(orient="records")
 
@@ -34,6 +39,7 @@ def load_to_postgres(df):
     stmt = pg_insert(missing).values(records)
     do_update = {c.name: stmt.excluded[c.name] for c in missing.c if c.name not in ('id',)}  # skip PK, or pick subset
 
+    logger.debug("Preparing upsert statement for postgres.")
     stmt = stmt.on_conflict_do_update(
         index_elements=["name"],  # or constraint name
         set_=do_update,
@@ -42,3 +48,5 @@ def load_to_postgres(df):
     with engine.begin() as conn:
         conn.execute(stmt)
         conn.commit()
+
+    logger.info(f"Loaded {len(records)} records into postgres.")
