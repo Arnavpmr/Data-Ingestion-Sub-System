@@ -47,7 +47,7 @@ class NPSParser(Parser):
                         record['age'] = age_match.group(1)
                     
                     # Extract Gender
-                    record['gender'] = 'M' if 'male' in description.lower() else 'F'
+                    record['gender'] = 'F' if 'female' in description.lower() else 'M'
                 
                 # Extract Date Missing
                 date_match = re.search(r'Date Missing:\s*([^\n]+)', text)

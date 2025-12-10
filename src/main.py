@@ -90,7 +90,7 @@ def main():
     final_data = clean_insufficient_rows(deduped_data)
     logger.info("Final data cleaning completed.")
 
-    # Enrich data by filling in missing genders from names
+    # Enrich data by filling in missing genders from names (gender-guesser)
     logger.info("Enriching data by filling missing genders")
     final_data = fill_gender(final_data)
     logger.info("Gender enrichment completed.")
