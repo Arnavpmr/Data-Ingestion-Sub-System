@@ -42,8 +42,8 @@ PostgreSQL.
 
 ## Architecture
 
-Bronze → Silver → Gold layered architecture: 1. **Bronze:** Raw HTML,
-raw PDFs, raw Kaggle files
+Bronze → Silver → Gold layered architecture: 
+1. **Bronze:** Raw HTML, raw PDFs, raw Kaggle files
 2. **Silver:** Parsed + standardized tables
 3. **Gold:** Deduped, validated, merged final dataset
 
