@@ -37,24 +37,24 @@ def main():
         )
     ]
 
-    # logger.info("Starting scraping process.")
+    logger.info("Starting scraping process.")
 
-    # # Run single-page scrapers
-    # for scraper in single_page_scrapers:
-    #     logger.info(f"Fetching page for {scraper.name}")
-    #     # html = scraper.fetch_page()
-    #     # scraper.save_page(html)
-    #     logger.info(f"Saved page for {scraper.name}")
+    # Run single-page scrapers
+    for scraper in single_page_scrapers:
+        logger.info(f"Fetching page for {scraper.name}")
+        html = scraper.fetch_page()
+        scraper.save_page(html)
+        logger.info(f"Saved page for {scraper.name}")
     
     # # Run multi-page scraper for Missing NPF
     # logger.info("Starting multi-page scraping for Missing NPF profiles.")
     # scrape_all_profiles(start_page=1, delay=1.0)
 
-    # logger.info("Fetching kaggle data.")
-    # fetch_kaggle_data()
-    # logger.info("Kaggle data fetched successfully.")
+    logger.info("Fetching kaggle data.")
+    fetch_kaggle_data()
+    logger.info("Kaggle data fetched successfully.")
 
-    # logger.info("Scraping and data fetching process completed! Beginning parsing and validation.")
+    logger.info("Scraping and data fetching process completed! Beginning parsing and validation.")
 
     # Initialize parsers
     parsers = [
@@ -96,9 +96,9 @@ def main():
     logger.info("Gender enrichment completed.")
 
     # Load data into postgresql
-    # logger.info("Loading data into postgres")
-    # load_to_postgres(final_data)
-    # logger.info(f"Loaded {len(final_data)} records into postgres!")
+    logger.info("Loading data into postgres")
+    load_to_postgres(final_data)
+    logger.info(f"Loaded {len(final_data)} records into postgres!")
 
 if __name__ == "__main__":
     main()

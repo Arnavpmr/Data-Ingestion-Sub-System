@@ -1,36 +1,60 @@
-# Ingestion
+# Missing Persons Data Ingestion Pipeline
 
 ## Overview
-The Ingestion project is a data pipeline solution designed to extract, process, and load data from various sources into target systems.
 
-## Features
-- Multi-source data extraction
-- Data validation and transformation
-- Error handling and logging
-- Configurable ingestion workflows
+This project is an end‑to‑end ETL/ELT data ingestion system that
+consolidates missing‑persons information from multiple heterogeneous
+sources --- scraped websites, PDFs, and Kaggle datasets --- into a
+unified cleaned dataset suitable for analytics and storage in
+PostgreSQL.
 
-## Getting Started
-1. Clone the repository
-2. Install dependencies: `npm install` or `pip install -r requirements.txt`
-3. Configure your data sources in `config.yml`
-4. Run the ingestion pipeline: `npm start` or `python main.py`
+## Key Features
 
-## Project Structure
-```
-├── src/
-├── config/
-├── tests/
-└── docs/
-```
+-   **Automated Web Scraping**
+    -   Custom scraper + parser class for each website source\
+    -   BeautifulSoup + regex extraction\
+    -   Raw HTML stored in *bronze* layer\
+    -   Cleaned, parsed CSVs stored in *silver* layer\
+    -   Fuzzy date correction for misspellings (e.g., *Ocbtober →
+        October*)
+-   **PDF Table Extraction**
+    -   Tabula to extract structured tables\
+    -   Standardization of dates, columns, and formats\
+    -   Output stored in silver layer as CSV
+-   **Kaggle Dataset Ingestion**
+    -   KaggleHub API for downloading datasets\
+    -   Stored directly in *bronze* layer
+-   **Validation & Standardization**
+    -   Pydantic schema enforcing required fields\
+    -   Optional fields coerced (age → int)\
+    -   Dataset‑specific rules respected (required fields only enforced
+        if present)\
+    -   Invalid rows logged to `debug.log`
+-   **Deduplication & Record Linking**
+    -   Dedupe.io ML‑powered clustering\
+    -   Merges duplicate clusters by selecting rows with highest
+        information completeness\
+    -   Final merged table cleaned again to ensure all required columns
+        are present
+-   **PostgreSQL Loading**
+    -   SQLAlchemy UPSERT logic\
+    -   Final "gold" table stored in PostgreSQL
 
-## Challenges
-Web scraping
-    Data is formatted very different from site to site
-    Names can be slightly mispelled or vary which makes it challenging to consolidate data
-    Website used a mix of hyphens and dashes which took a while for me to catch during scraping
+## Architecture
 
-Important Notes
-Do not train dedupe with vscode's debugger as it interferes with stuff
-Run validator.py in the terminal
-Only need to focus on unit testing individual functions with pytest
-    No need for integration tests or anything else
+Bronze → Silver → Gold layered architecture: 1. **Bronze:** Raw HTML,
+raw PDFs, raw Kaggle files\
+2. **Silver:** Parsed + standardized tables\
+3. **Gold:** Deduped, validated, merged final dataset
+
+## Logging
+
+-   Structured logging config\
+-   `app.log`: standard pipeline logs\
+-   `error.log`: errors only\
+-   `debug.log`: rejected rows and validation failures
+
+## Tech Stack
+
+Python, BeautifulSoup, regex, Tabula, pandas, pydantic, dedupe.io,
+SQLAlchemy, PostgreSQL.
