@@ -5,6 +5,7 @@ from scrapers.missingnpf_scraper import scrape_all_profiles
 
 from parsers.locationsunknown_parser import LocationsUnknownParser
 from parsers.nps_parser import NPSParser
+from parsers.missingnpf_parser import MissingNPFParser
 from parsers.yosemite_pdf_parser import parse_yosemite_pdf
 
 from fetch_kaggle import fetch_kaggle_data
@@ -25,41 +26,42 @@ def main():
     setup_logging()
     logger = get_logger(module_name=__name__)
 
-    # Initialize single-page scrapers
-    single_page_scrapers = [
-        SinglePageScraper(
-            name="locationsunknown",
-            base_url="https://locationsunknown.org/the-missing-list"
-        ),
-        SinglePageScraper(
-            name="nps",
-            base_url="https://www.nps.gov/orgs/1563/cold-cases.htm"
-        )
-    ]
+    # # Initialize single-page scrapers
+    # single_page_scrapers = [
+    #     SinglePageScraper(
+    #         name="locationsunknown",
+    #         base_url="https://locationsunknown.org/the-missing-list"
+    #     ),
+    #     SinglePageScraper(
+    #         name="nps",
+    #         base_url="https://www.nps.gov/orgs/1563/cold-cases.htm"
+    #     )
+    # ]
 
-    logger.info("Starting scraping process.")
+    # logger.info("Starting scraping process.")
 
-    # Run single-page scrapers
-    for scraper in single_page_scrapers:
-        logger.info(f"Fetching page for {scraper.name}")
-        html = scraper.fetch_page()
-        scraper.save_page(html)
-        logger.info(f"Saved page for {scraper.name}")
+    # # Run single-page scrapers
+    # for scraper in single_page_scrapers:
+    #     logger.info(f"Fetching page for {scraper.name}")
+    #     html = scraper.fetch_page()
+    #     scraper.save_page(html)
+    #     logger.info(f"Saved page for {scraper.name}")
     
     # # Run multi-page scraper for Missing NPF
     # logger.info("Starting multi-page scraping for Missing NPF profiles.")
     # scrape_all_profiles(start_page=1, delay=1.0)
 
-    logger.info("Fetching kaggle data.")
-    fetch_kaggle_data()
-    logger.info("Kaggle data fetched successfully.")
+    # logger.info("Fetching kaggle data.")
+    # fetch_kaggle_data()
+    # logger.info("Kaggle data fetched successfully.")
 
-    logger.info("Scraping and data fetching process completed! Beginning parsing and validation.")
+    # logger.info("Scraping and data fetching process completed! Beginning parsing and validation.")
 
     # Initialize parsers
     parsers = [
         LocationsUnknownParser(),
         NPSParser(),
+        MissingNPFParser(),
     ]
 
     # Run parsers

@@ -14,6 +14,10 @@ DELAY = 1.0
 PEOPLE_PER_PAGE = 10
 START_PAGE = 1
 
+today = datetime.now().strftime("%Y-%m-%d")
+RUN_DIR = os.path.join(OUTPUT_BASE_DIR, today)
+PAGES_DIR = os.path.join(RUN_DIR, "pages")
+
 logger = get_logger(module_name=__name__)
 
 def url_params(page):
@@ -59,6 +63,9 @@ def name_to_url(name):
     return name.lower().strip().replace(' ', '-')
 
 def scrape_all_profiles(start_page=START_PAGE, delay=DELAY):
+    os.makedirs(RUN_DIR, exist_ok=True)
+    os.makedirs(PAGES_DIR, exist_ok=True)
+
     page_count = start_page
     logger = get_logger(module_name=__name__)
 
@@ -98,15 +105,3 @@ def scrape_all_profiles(start_page=START_PAGE, delay=DELAY):
         time.sleep(delay)
     
     logger.info(f"Scraped {page_count} pages!")
-
-if __name__ == "__main__":
-    # Create a folder for this run using current date
-    today = datetime.now().strftime("%Y-%m-%d")
-
-    RUN_DIR = os.path.join(OUTPUT_BASE_DIR, today)
-    PAGES_DIR = os.path.join(RUN_DIR, "pages")
-
-    os.makedirs(RUN_DIR, exist_ok=True)
-    os.makedirs(PAGES_DIR, exist_ok=True)
-
-    scrape_all_profiles()
